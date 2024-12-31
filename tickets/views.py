@@ -174,12 +174,13 @@ def create_reservation(request):
         guest=guest,
         movie=movie
     )
+    
+    #serializer
+    serializer = ReservationSerializer(reservation)
+    # return Response(serializer.data)
+    
 
     # Return success response with guest name
     return Response(
-        {
-            "message": "Reservation created successfully.",
-            "guest_name": guest.name
-        },
-        status=status.HTTP_201_CREATED
+        serializer.data, status=status.HTTP_201_CREATED 
     )

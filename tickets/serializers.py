@@ -14,5 +14,5 @@ class MovieSerializer(serializers.ModelSerializer):
 class ReservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reservation
-        fields = ['PK', 'reservation','name','mobile']
+        fields = '__all__'
     
