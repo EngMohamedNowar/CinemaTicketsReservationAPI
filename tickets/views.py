@@ -1,12 +1,12 @@
 from django.shortcuts import render
-from .models import Guest
+from .models import Guest , Movie , Reservation
 from rest_framework.decorators import api_view
-from .serializers import GuestSerializer
+from .serializers import GuestSerializer ,MovieSerializer ,ReservationSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework  import status ,filters
 from django.http import Http404
-from rest_framework import generics ,mixins
+from rest_framework import generics ,mixins ,viewsets
 # Create your views here.
 # FUNCTION BASED VIEWS
 # @api_view('GET','PUT','DELETE')
@@ -101,3 +101,85 @@ class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
     filter_backends = [filters.SearchFilter]
     search_fields = ['name','mobile']
 
+
+# Viewsets Guests
+class Viewsets_guest(viewsets.ModelViewSet):
+    queryset = Guest.objects.all()
+    serializer_class = GuestSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name','mobile']
+
+ # Viewsets Movie
+class Viewsets_movie(viewsets.ModelViewSet):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['movie','hall']
+# Viewsets reservations
+class Viewsets_reservation(viewsets.ModelViewSet):
+    queryset = Reservation.objects.all()
+    serializer_class = ReservationSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['guest','movie']
+
+
+# Function To Find Movie
+@api_view(['GET'])
+def find_movie(request):
+    # Retrieve query parameters
+    movie_name = request.query_params.get('movie')  # Correct field name
+    
+    # Validate query parameters
+    if not movie_name:
+        return Response(
+            {"error": "'movie' query parameters are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Filter movies
+    movies = Movie.objects.filter(movie=movie_name)  # Adjust fields if necessary
+    
+    if not movies.exists():
+        return Response(
+            {"message": "No movies found matching the given criteria."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Serialize and return data
+    serializer = MovieSerializer(movies, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def create_reservation(request):
+    try:
+        # Retrieve the movie based on the provided `hall` and `movie` values
+        movie = Movie.objects.get(
+            hall=request.query_params.get('hall'),
+            movie=request.query_params.get('movie')
+        )
+    except Movie.DoesNotExist:
+        return Response(
+            {"error": "Movie not found with the provided hall and movie name."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Create a new guest
+    guest = Guest.objects.create(
+        name=request.query_params.get('name'),
+        mobile=request.query_params.get('mobile')
+    )
+
+    # Create a new reservation
+    reservation = Reservation.objects.create(
+        guest=guest,
+        movie=movie
+    )
+
+    # Return success response with guest name
+    return Response(
+        {
+            "message": "Reservation created successfully.",
+            "guest_name": guest.name
+        },
+        status=status.HTTP_201_CREATED
+    )
