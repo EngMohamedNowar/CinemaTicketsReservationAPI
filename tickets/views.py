@@ -1,13 +1,19 @@
 from django.shortcuts import render
-from .models import Guest , Movie , Reservation
+from .models import Guest , Movie , Reservation , Post
 from rest_framework.decorators import api_view
-from .serializers import GuestSerializer ,MovieSerializer ,ReservationSerializer
+from .serializers import GuestSerializer ,MovieSerializer ,ReservationSerializer , PostSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework  import status ,filters
 from django.http import Http404
 from rest_framework import generics ,mixins ,viewsets
+#import TokenAuthentication
+from rest_framework.authentication import SessionAuthentication ,BasicAuthentication ,TokenAuthentication
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsAuthorOrReadOnly
 # Create your views here.
+
 # FUNCTION BASED VIEWS
 # @api_view('GET','PUT','DELETE')
 # def FBV_pk(request,pk):
@@ -93,6 +99,7 @@ class Generics_list(generics.ListCreateAPIView):
     serializer_class = GuestSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name','mobile']
+    authentication_classes = [TokenAuthentication]
 
 #Generics GET , PUT , DELETE
 class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
@@ -100,6 +107,7 @@ class Generics_pk(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GuestSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['name','mobile']
+    authentication_classes = [TokenAuthentication]
 
 
 # Viewsets Guests
@@ -184,3 +192,13 @@ def create_reservation(request):
     return Response(
         serializer.data, status=status.HTTP_201_CREATED 
     )
+
+# Post authorization editor
+class Post_pk(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthorOrReadOnly]
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+class Post(generics.ListCreateAPIView):
+    permission_classes = [IsAuthorOrReadOnly]
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer

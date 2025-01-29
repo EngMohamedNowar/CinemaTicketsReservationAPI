@@ -19,4 +19,7 @@ urlpatterns = [
     path('viewsets/', include(router.urls)),
     path('findmovies/',views.find_movie),
     path('create_reservation/',views.create_reservation),
+    #post pk generics
+    path('post/generics/<int:pk>',views.Post_pk.as_view()),
+    path('post/generics/',views.Post.as_view()),
 ]
